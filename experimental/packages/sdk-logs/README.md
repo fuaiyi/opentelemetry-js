@@ -3,6 +3,8 @@
 [![NPM Published Version][npm-img]][npm-url]
 [![Apache License][license-image]][license-image]
 
+**Note: This is an experimental package under active development. New releases may include breaking changes.**
+
 OpenTelemetry logs module contains the foundation for all logs SDKs of [opentelemetry-js](https://github.com/open-telemetry/opentelemetry-js).
 
 Used standalone, this module provides methods for manual instrumentation of code, offering full control over recording logs for client-side JavaScript (browser) and Node.js.
@@ -22,12 +24,18 @@ The basic setup of the SDK can be seen as followings:
 
 ```js
 const logsAPI = require("@opentelemetry/api-logs");
-const { LoggerProvider, SimpleLogRecordProcessor, ConsoleLogRecordExporter } = require("@opentelemetry/sdk-logs");
+const {
+  LoggerProvider,
+  SimpleLogRecordProcessor,
+  ConsoleLogRecordExporter,
+} = require("@opentelemetry/sdk-logs");
 
 // To start a logger, you first need to initialize the Logger provider.
 const loggerProvider = new LoggerProvider();
 // Add a processor to export log record
-loggerProvider.addLogRecordProcessor(new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()));
+loggerProvider.addLogRecordProcessor(
+  new SimpleLogRecordProcessor(new ConsoleLogRecordExporter())
+);
 
 //  To create a log record, you first need to get a Logger instance
 const logger = loggerProvider.getLogger("default");
@@ -65,6 +73,7 @@ configuration as specified in [config.ts](./src/config.ts)
 ## Example
 
 See [examples/logs](https://github.com/open-telemetry/opentelemetry-js/tree/main/experimental/examples/logs)
+
 ## Useful links
 
 - For more information on OpenTelemetry, visit: <https://opentelemetry.io/>
