@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { NoopLogger } from '../../src/NoopLogger';
-import { NoopLoggerProvider } from '../../src/NoopLoggerProvider';
+import * as assert from "assert";
 
-describe('NoopLoggerProvider', () => {
-  it('should not crash', () => {
+import { NoopLogger } from "../../src/NoopLogger";
+import { NoopLoggerProvider } from "../../src/NoopLoggerProvider";
+
+describe("NoopLoggerProvider", () => {
+  it("should not crash", () => {
     const loggerProvider = new NoopLoggerProvider();
 
-    assert.ok(loggerProvider.getLogger('logger-name') instanceof NoopLogger);
-    assert.ok(loggerProvider.getLogger('logger-name', 'v1') instanceof NoopLogger);
-    assert.ok(loggerProvider.getLogger('logger-name', 'v1', {
-      schemaUrl: 'https://opentelemetry.io/schemas/1.7.0'
-    }) instanceof NoopLogger);
+    assert.ok(loggerProvider.getLogger("logger-name") instanceof NoopLogger);
+    assert.ok(loggerProvider.getLogger("logger-name", "v1") instanceof NoopLogger);
+    assert.ok(
+      loggerProvider.getLogger("logger-name", "v1", {
+        schemaUrl: "https://opentelemetry.io/schemas/1.7.0",
+      }) instanceof NoopLogger
+    );
   });
 });
