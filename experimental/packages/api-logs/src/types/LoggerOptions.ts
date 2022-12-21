@@ -24,16 +24,10 @@ export interface LoggerOptions {
   schemaUrl?: string;
 
   /**
-   * The default domain for events created by the Logger.
-   *
-   * The combination of event name and event domain uiquely identifies an event.
-   * By supplying an event domain, it is possible to use the same event name across
-   * different domains / use cases.
-   *
-   * The default domain can be overridden when emitting an individual event.
-   * @default ''
+   * Specifies whether the Trace Context should automatically be passed on to the LogRecords emitted by the Logger.
+   * @default true
    */
-  eventDomain?: string;
+  includeTraceContext?: boolean;
 
   /**
    * The instrumentation scope attributes to associate with emitted telemetry
