@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-import type { Resource } from "@opentelemetry/resources";
-import type { Attributes, HrTime, SpanContext } from "@opentelemetry/api";
-import type { InstrumentationScope } from "@opentelemetry/core";
-import type { SeverityNumber } from "@opentelemetry/api-logs";
+import type { Resource } from '@opentelemetry/resources';
+import type { Attributes, HrTime } from '@opentelemetry/api';
+import type { InstrumentationScope } from '@opentelemetry/core';
+import type { SeverityNumber } from '@opentelemetry/api-logs';
 
 export interface ReadableLogRecord {
+  readonly time: HrTime;
+  readonly observedTime?: HrTime;
+  readonly traceId?: string;
+  readonly spanId?: string;
+  readonly traceFlags?: number;
+  readonly severityText?: string;
+  readonly severityNumber?: SeverityNumber;
+  readonly body?: string;
   readonly resource: Resource;
   readonly instrumentationScope: InstrumentationScope;
-  readonly timestamp: HrTime;
   readonly attributes: Attributes;
-  readonly context?: SpanContext;
-  readonly severityNumber?: SeverityNumber;
-  readonly severityText?: string;
-  readonly body?: string;
 }

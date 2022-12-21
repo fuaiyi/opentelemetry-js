@@ -16,7 +16,9 @@
 
 export * from "./types";
 export * from "./LoggerProvider";
+export * from "./EventLoggerProvider";
 export * from "./Logger";
+export * from "./EventLogger";
 export * from "./LogRecord";
 export * from "./LogRecordProcessor";
 export * from "./export/ReadableLogRecord";

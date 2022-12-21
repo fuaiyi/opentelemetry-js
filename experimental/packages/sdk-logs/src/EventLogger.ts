@@ -15,14 +15,23 @@
  */
 
 import type * as logsAPI from '@opentelemetry/api-logs';
+import { Logger } from '@opentelemetry/api-logs';
+import { EVENT_LOGS_ATTRIBUTES } from './semantic-conventions';
 
-import type { LoggerConfig } from './types';
-import { LogRecord } from './LogRecord';
+export class EventLogger implements logsAPI.EventLogger {
+  constructor(
+    private readonly logger: Logger,
+    private readonly domain: string
+  ) {}
 
-export class Logger implements logsAPI.Logger {
-  constructor(private readonly config: LoggerConfig) {}
-
-  public emitLogRecord(logRecord: logsAPI.LogRecord): void {
-    new LogRecord(this.config, logRecord).emit();
+  emitLogEvent(eventName: string, logRecord: logsAPI.LogRecord): void {
+    this.logger.emitLogRecord({
+      ...logRecord,
+      attributes: {
+        ...logRecord.attributes,
+        [EVENT_LOGS_ATTRIBUTES.name]: eventName,
+        [EVENT_LOGS_ATTRIBUTES.domain]: this.domain,
+      },
+    });
   }
 }

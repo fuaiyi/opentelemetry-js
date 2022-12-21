@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import type { Resource } from "@opentelemetry/resources";
-import type { InstrumentationScope } from "@opentelemetry/core";
-import type { LogRecordOptions } from "@opentelemetry/api-logs";
+import type { Resource } from '@opentelemetry/resources';
+import type { InstrumentationScope } from '@opentelemetry/core';
 
-import type { LoggerSharedState } from "./LoggerSharedState";
+import type { LoggerSharedState } from './LoggerSharedState';
 
 export interface LoggerProviderConfig {
   /** Resource associated with trace telemetry  */
@@ -44,8 +43,8 @@ export interface LogRecordLimits {
 
 export interface LoggerConfig {
   loggerSharedState: LoggerSharedState;
-  eventDomain: string;
   instrumentationScope: InstrumentationScope;
+  includeTraceContext: boolean;
 }
 
 /** Interface configuration for a buffer. */
@@ -71,8 +70,4 @@ export interface BatchLogRecordProcessorBrowserConfig extends BufferConfig {
   /** Disable flush when a user navigates to a new page, closes the tab or the browser, or,
    * on mobile, switches to a different app. Auto flush is enabled by default. */
   disableAutoFlushOnDocumentHide?: boolean;
-}
-
-export interface LogRecordData extends LogRecordOptions {
-  instrumentationScope: InstrumentationScope;
 }

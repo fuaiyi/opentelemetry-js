@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-export * from './types/Logger';
-export * from './types/EventLogger';
-export * from './types/LoggerProvider';
-export * from './types/EventLoggerProvider';
-export * from './types/LogRecord';
-export * from './types/LoggerOptions';
+import { LogRecord } from './LogRecord';
 
-import { LogsAPI } from './api/logs';
-export const logs = LogsAPI.getInstance();
+export interface EventLogger {
+  /**
+   * Emit a log event.
+   *
+   * @param eventName the Event name.
+   * @param logRecord the LogRecord representing the Event.
+   */
+  emitLogEvent(eventName: string, logRecord: LogRecord): void;
+}

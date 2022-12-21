@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-export const validAttributes = {
-  string: "string",
-  number: 0,
-  bool: true,
-  "array<string>": ["str1", "str2"],
-  "array<number>": [1, 2],
-  "array<bool>": [true, false],
-};
+import type * as logsAPI from '@opentelemetry/api-logs';
 
-export const invalidAttributes = {
-  // invalid attribute type object
-  object: { foo: "bar" },
-  // invalid attribute inhomogenous array
-  "non-homogeneous-array": [0, ""],
-  // This empty length attribute should not be set
-  "": "empty-key",
-};
+import { EventLogger } from './EventLogger';
+import { LoggerProvider } from './LoggerProvider';
+import { DEFAULT_EVENT_DOMAIN } from './config';
+
+export class EventLoggerProvider
+  extends LoggerProvider
+  implements logsAPI.EventLoggerProvider
+{
+  getEventLogger(logger: logsAPI.Logger, domain: string): logsAPI.EventLogger {
+    return new EventLogger(logger, domain || DEFAULT_EVENT_DOMAIN);
+  }
+}

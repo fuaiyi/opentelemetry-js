@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-export * from './types/Logger';
-export * from './types/EventLogger';
-export * from './types/LoggerProvider';
-export * from './types/EventLoggerProvider';
-export * from './types/LogRecord';
-export * from './types/LoggerOptions';
+import { EventLogger } from './EventLogger';
+import { Logger } from './Logger';
+import { LoggerProvider } from './LoggerProvider';
 
-import { LogsAPI } from './api/logs';
-export const logs = LogsAPI.getInstance();
+/**
+ * A registry for creating named {@link EventLogger}s.
+ */
+export interface EventLoggerProvider extends LoggerProvider {
+  /**
+   * Returns a EventLogger instance and is responsible for emitting Events as LogRecords.
+   *
+   * @param logger the delegate Logger used to emit Events as LogRecords.
+   * @param domain the domain of emitted events, used to set the event.domain attribute.
+   */
+  getEventLogger(logger: Logger, domain: string): EventLogger;
+}

@@ -14,39 +14,87 @@
  * limitations under the License.
  */
 
-import type { Attributes, AttributeValue, SpanContext } from "@opentelemetry/api";
-import type * as logsAPI from "@opentelemetry/api-logs";
-import type { InstrumentationScope } from "@opentelemetry/core";
-import * as api from "@opentelemetry/api";
-import { hrTime, timeInputToHrTime, isAttributeValue } from "@opentelemetry/core";
+import type { Attributes, AttributeValue } from '@opentelemetry/api';
+import type * as logsAPI from '@opentelemetry/api-logs';
+import type { InstrumentationScope } from '@opentelemetry/core';
+import * as api from '@opentelemetry/api';
+import {
+  hrTime,
+  timeInputToHrTime,
+  isAttributeValue,
+} from '@opentelemetry/core';
 
-import type { ReadableLogRecord } from "./export/ReadableLogRecord";
-import type { LoggerSharedState } from "./LoggerSharedState";
-import type { LogRecordData } from "./types";
+import { Resource } from '@opentelemetry/resources';
+import { ReadableLogRecord } from './export/ReadableLogRecord';
+import { LoggerConfig } from './types';
 
-export class LogRecord implements logsAPI.LogRecord {
-  private readonly _timestamp: api.HrTime;
-  private readonly _severityNumber?: logsAPI.SeverityNumber;
-  private readonly _severityText?: string;
-  private readonly _body?: string;
-  private readonly _attributes: Attributes;
-  private readonly _context?: SpanContext;
-  private readonly _instrumentationScope: InstrumentationScope;
+export class LogRecord implements ReadableLogRecord {
+  readonly time: api.HrTime;
+  readonly observedTime?: api.HrTime;
+  readonly traceId?: string;
+  readonly spanId?: string;
+  readonly traceFlags?: number;
+  readonly severityText?: string;
+  readonly severityNumber?: logsAPI.SeverityNumber;
+  readonly body?: string;
+  readonly resource: Resource;
+  readonly instrumentationScope: InstrumentationScope;
+  readonly attributes: Attributes = {};
 
   private _isEmitted = false;
 
-  constructor(private readonly _loggerSharedState: LoggerSharedState, data: LogRecordData) {
-    const { timestamp, severityNumber, severityText, body, context, instrumentationScope, attributes = {} } = data;
-    this._timestamp = timestamp ? timeInputToHrTime(timestamp) : hrTime();
-    this._severityNumber = severityNumber;
-    this._severityText = severityText;
-    this._body = body;
-    this._attributes = attributes;
-    this._context = context;
-    this._instrumentationScope = instrumentationScope;
+  constructor(
+    private readonly config: LoggerConfig,
+    logRecord: logsAPI.LogRecord
+  ) {
+    const {
+      time = hrTime(),
+      observedTime,
+      // if includeTraceContext is true, Gets the current trace context by default
+      context = this.config.includeTraceContext
+        ? api.context.active()
+        : undefined,
+      severityNumber,
+      severityText,
+      body,
+      attributes = {},
+    } = logRecord;
+    this.time = timeInputToHrTime(time);
+    this.observedTime =
+      observedTime === undefined
+        ? observedTime
+        : timeInputToHrTime(observedTime);
+
+    if (context) {
+      const spanContext = api.trace.getSpanContext(context);
+      if (spanContext && api.isSpanContextValid(spanContext)) {
+        this.spanId = spanContext.spanId;
+        this.traceId = spanContext.traceId;
+        this.traceFlags = spanContext.traceFlags;
+      }
+    }
+
+    this.severityNumber = severityNumber;
+    this.severityText = severityText;
+    this.body = body;
+    this.resource = this.config.loggerSharedState.resource;
+    this.instrumentationScope = this.config.instrumentationScope;
+    this.setAttributes(attributes);
   }
 
-  public setAttribute(key: string, value?: AttributeValue): LogRecord {
+  public emit(): void {
+    if (this.config.loggerSharedState.shutdownOnceFeature.isCalled) {
+      api.diag.warn('can not emit, it is already shutdown');
+      return;
+    }
+    if (this._isLogRecordEmitted()) {
+      return;
+    }
+    this._isEmitted = true;
+    this.config.loggerSharedState.activeProcessor.onEmit(this);
+  }
+
+  private setAttribute(key: string, value?: AttributeValue): LogRecord {
     if (value === null || this._isLogRecordEmitted()) {
       return this;
     }
@@ -59,43 +107,34 @@ export class LogRecord implements logsAPI.LogRecord {
       return this;
     }
     if (
-      Object.keys(this._attributes).length >= this._loggerSharedState.logRecordLimits.attributeCountLimit! &&
-      !Object.prototype.hasOwnProperty.call(this._attributes, key)
+      Object.keys(this.attributes).length >=
+        this.config.loggerSharedState.logRecordLimits.attributeCountLimit! &&
+      !Object.prototype.hasOwnProperty.call(this.attributes, key)
     ) {
       return this;
     }
-    this._attributes[key] = this._truncateToSize(value);
+    this.attributes[key] = this._truncateToSize(value);
     return this;
   }
 
-  public setAttributes(attributes: Attributes): LogRecord {
+  private setAttributes(attributes: Attributes): LogRecord {
     for (const [k, v] of Object.entries(attributes)) {
       this.setAttribute(k, v);
     }
     return this;
   }
 
-  public emit(): void {
-    if (this._loggerSharedState.shutdownOnceFeature.isCalled) {
-      api.diag.warn("can not emit, it is already shutdown");
-      return;
-    }
-    if (this._isLogRecordEmitted()) {
-      return;
-    }
-    this._isEmitted = true;
-    this._loggerSharedState.activeProcessor.onEmit(this._toReadable());
-  }
-
   private _isLogRecordEmitted(): boolean {
     if (this._isEmitted) {
-      api.diag.warn("Can not execute the operation on emitted LogRecord");
+      api.diag.warn('Can not execute the operation on emitted LogRecord');
     }
     return this._isEmitted;
   }
 
   private _truncateToSize(value: AttributeValue): AttributeValue {
-    const limit = this._loggerSharedState.logRecordLimits.attributeValueLengthLimit || 0;
+    const limit =
+      this.config.loggerSharedState.logRecordLimits.attributeValueLengthLimit ||
+      0;
     // Check limit
     if (limit <= 0) {
       // Negative values are invalid, so do not truncate
@@ -104,13 +143,15 @@ export class LogRecord implements logsAPI.LogRecord {
     }
 
     // String
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       return this._truncateToLimitUtil(value, limit);
     }
 
     // Array of strings
     if (Array.isArray(value)) {
-      return (value as []).map((val) => (typeof val === "string" ? this._truncateToLimitUtil(val, limit) : val));
+      return (value as []).map(val =>
+        typeof val === 'string' ? this._truncateToLimitUtil(val, limit) : val
+      );
     }
 
     // Other types, no need to apply value length limit
@@ -122,18 +163,5 @@ export class LogRecord implements logsAPI.LogRecord {
       return value;
     }
     return value.substr(0, limit);
-  }
-
-  private _toReadable(): ReadableLogRecord {
-    return {
-      resource: this._loggerSharedState.resource,
-      timestamp: this._timestamp,
-      severityNumber: this._severityNumber,
-      severityText: this._severityText,
-      body: this._body,
-      attributes: this._attributes,
-      context: this._context,
-      instrumentationScope: this._instrumentationScope,
-    };
   }
 }

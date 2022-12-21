@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Attributes, SpanContext, TimeInput } from '@opentelemetry/api';
+import { Attributes, Context, TimeInput } from '@opentelemetry/api';
 
 export enum SeverityNumber {
   UNSPECIFIED = 0,
@@ -56,9 +56,9 @@ export interface LogRecord {
   observedTime?: TimeInput;
 
   /**
-   * The trace context when the log record occurred
+   * The Context including TraceContext of the log record
    */
-  context?: SpanContext;
+  context?: Context;
 
   /**
    * Numerical value of the severity.

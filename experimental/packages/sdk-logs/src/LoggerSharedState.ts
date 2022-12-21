@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { BindOnceFuture } from "@opentelemetry/core";
-import type { Resource } from "@opentelemetry/resources";
+import type { BindOnceFuture } from '@opentelemetry/core';
+import type { Resource } from '@opentelemetry/resources';
 
-import type { MultiLogRecordProcessor } from "./MultiLogRecordProcessor";
-import type { LogRecordLimits } from "./types";
+import type { MultiLogRecordProcessor } from './MultiLogRecordProcessor';
+import type { LogRecordLimits } from './types';
 
 export interface LoggerSharedState {
   readonly activeProcessor: MultiLogRecordProcessor;

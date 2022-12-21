@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { ExportResult } from "@opentelemetry/core";
-import { ExportResultCode } from "@opentelemetry/core";
+import { ExportResult, hrTimeToMicroseconds } from '@opentelemetry/core';
+import { ExportResultCode } from '@opentelemetry/core';
 
-import type { ReadableLogRecord } from "./ReadableLogRecord";
-import type { LogRecordExporter } from "./LogRecordExporter";
+import type { ReadableLogRecord } from './ReadableLogRecord';
+import type { LogRecordExporter } from './LogRecordExporter';
 
 /**
  * This is implementation of {@link LogRecordExporter} that prints LogRecords to the
@@ -30,8 +30,11 @@ export class ConsoleLogRecordExporter implements LogRecordExporter {
    * @param logs
    * @param resultCallback
    */
-  public export(logs: ReadableLogRecord[], resultCallback: (result: ExportResult) => void) {
-    this._sendLogRecords(logs).then((res) => resultCallback(res));
+  public export(
+    logs: ReadableLogRecord[],
+    resultCallback: (result: ExportResult) => void
+  ) {
+    this._sendLogRecords(logs).then(res => resultCallback(res));
   }
 
   /**
@@ -41,10 +44,32 @@ export class ConsoleLogRecordExporter implements LogRecordExporter {
     return Promise.resolve();
   }
 
-  private _sendLogRecords(logRecords: ReadableLogRecord[]): Promise<ExportResult> {
+  private _sendLogRecords(
+    logRecords: ReadableLogRecord[]
+  ): Promise<ExportResult> {
     for (const logRecord of logRecords) {
-      console.dir(logRecord, { depth: 3 });
+      console.dir(this._exportInfo(logRecord), { depth: 3 });
     }
     return Promise.resolve({ code: ExportResultCode.SUCCESS });
+  }
+
+  /**
+   * converts logRecord info into more readable format
+   * @param span
+   */
+  private _exportInfo(logRecord: ReadableLogRecord) {
+    return {
+      timestamp: hrTimeToMicroseconds(logRecord.time),
+      observedTimestamp: logRecord.observedTime
+        ? hrTimeToMicroseconds(logRecord.observedTime)
+        : undefined,
+      traceId: logRecord.traceId,
+      spanId: logRecord.spanId,
+      traceFlags: logRecord.traceFlags,
+      severityText: logRecord.severityText,
+      severityNumber: logRecord.severityNumber,
+      body: logRecord.body,
+      attributes: logRecord.attributes,
+    };
   }
 }

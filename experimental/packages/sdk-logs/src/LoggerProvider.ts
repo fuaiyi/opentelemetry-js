@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import type * as logsAPI from "@opentelemetry/api-logs";
-import { Resource } from "@opentelemetry/resources";
-import { BindOnceFuture, merge } from "@opentelemetry/core";
+import type * as logsAPI from '@opentelemetry/api-logs';
+import { Resource } from '@opentelemetry/resources';
+import { BindOnceFuture, merge } from '@opentelemetry/core';
 
-import type { LoggerProviderConfig } from "./types";
-import type { LogRecordProcessor } from "./LogRecordProcessor";
-import type { LoggerSharedState } from "./LoggerSharedState";
-import { Logger } from "./Logger";
-import { DEFAULT_EVENT_DOMAIN, loadDefaultConfig } from "./config";
-import { MultiLogRecordProcessor } from "./MultiLogRecordProcessor";
+import type { LoggerProviderConfig } from './types';
+import type { LogRecordProcessor } from './LogRecordProcessor';
+import type { LoggerSharedState } from './LoggerSharedState';
+import { Logger } from './Logger';
+import { loadDefaultConfig } from './config';
+import { MultiLogRecordProcessor } from './MultiLogRecordProcessor';
 
 export class LoggerProvider implements logsAPI.LoggerProvider {
   private readonly _loggerSharedState: LoggerSharedState;
@@ -31,7 +31,11 @@ export class LoggerProvider implements logsAPI.LoggerProvider {
   private _shutdownOnceFeature: BindOnceFuture<void>;
 
   constructor(config: LoggerProviderConfig = {}) {
-    const { resource, logRecordLimits, forceFlushTimeoutMillis } = merge({}, loadDefaultConfig(), config);
+    const { resource, logRecordLimits, forceFlushTimeoutMillis } = merge(
+      {},
+      loadDefaultConfig(),
+      config
+    );
     this._shutdownOnceFeature = new BindOnceFuture(this._showdownFeature, this);
     this._loggerSharedState = {
       resource: Resource.default().merge(resource ?? Resource.empty()),
@@ -44,16 +48,20 @@ export class LoggerProvider implements logsAPI.LoggerProvider {
   /**
    * Get a logger with the configuration of the LoggerProvider.
    */
-  public getLogger(name: string, version?: string, options?: logsAPI.LoggerOptions): Logger {
-    const { schemaUrl = "", eventDomain = DEFAULT_EVENT_DOMAIN } = options || {};
-    const key = `${name}@${version || ""}:${schemaUrl}`;
+  public getLogger(
+    name: string,
+    version?: string,
+    options?: logsAPI.LoggerOptions
+  ): Logger {
+    const { schemaUrl = '', includeTraceContext = true } = options || {};
+    const key = `${name}@${version || ''}:${schemaUrl}`;
     if (!this._loggers.has(key)) {
       this._loggers.set(
         key,
         new Logger({
-          eventDomain,
           loggerSharedState: this._loggerSharedState,
           instrumentationScope: { name, version, schemaUrl },
+          includeTraceContext,
         })
       );
     }
@@ -75,7 +83,7 @@ export class LoggerProvider implements logsAPI.LoggerProvider {
    */
   public forceFlush(): Promise<void> {
     if (this._shutdownOnceFeature.isCalled) {
-      return Promise.reject("can not flush, it is already shutdown");
+      return Promise.reject('can not flush, it is already shutdown');
     }
     return this._loggerSharedState.activeProcessor.forceFlush();
   }
