@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:event": "node event.js"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.3.0",

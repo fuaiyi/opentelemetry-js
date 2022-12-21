@@ -7,8 +7,16 @@ npm install
 
 ## Run the Application
 
+LogRecord
+
 ```sh
 npm start
+```
+
+LogEvent
+
+```sh
+npm start:event
 ```
 
 ## Useful links
